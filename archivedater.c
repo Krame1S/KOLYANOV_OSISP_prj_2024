@@ -84,7 +84,7 @@ void create_updated_archive_from_temp_dir(const char *archive_path, const char *
     } else if (strcmp(archive_type, "tar.bz2") == 0) {
         snprintf(command, sizeof(command), "tar -cjvf %s -C temp_dir .", archive_path);
     } else if (strcmp(archive_type, "zip") == 0) {
-        snprintf(command, sizeof(command), "cd temp_dir && zip -r %s .", archive_path);
+        snprintf(command, sizeof(command), "cd temp_dir && zip -r -b . %s . && mv %s ..", archive_path, archive_path);
     } else {
         log_message("ERROR", "Unsupported archive type: %s", archive_type);
         exit(1);
@@ -96,7 +96,7 @@ void create_updated_archive_from_temp_dir(const char *archive_path, const char *
 // Function for changing file modification dates in the temporary directory
 void change_file_mod_dates_in_temp_dir(const char *file_extension) {
     char command[COMMAND_SIZE];
-    snprintf(command, sizeof(command), "find temp_dir -type f -name '*%s' -exec ls -lt {} + | head -n 1 | awk '{print $9}' > max_mod_file.txt", file_extension);
+    snprintf(command, sizeof(command), "find temp_dir -type f -name '*%s' -printf '%%T@ %%p\\n' | sort -n | tail -n 1 | awk '{print $2}' > max_mod_file.txt", file_extension);
     execute_command(command);
     log_message("INFO", "Changed file modification dates in temporary directory");
 }
