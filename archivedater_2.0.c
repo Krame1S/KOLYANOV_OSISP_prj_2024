@@ -2,109 +2,118 @@
 #include <stdlib.h>
 #include <string.h>
 #include <errno.h>
+#include <unistd.h>
+#include <sys/wait.h>
 
 // Константы для размеров буферов
 #define COMMAND_SIZE 256
 #define MAX_MOD_DATE_SIZE 20
 #define FILE_EXTENSION_SIZE 10
 
+// Function prototypes
+void create_temp_dir();
+void extract_archive_to_temp_dir();
+void create_updated_archive_from_temp_dir();
+void extract_archive();
+void change_file_mod_dates_in_temp_dir(const char *file_extension);
+void get_mod_date(const char *file_extension);
+void set_mod_dates(const char *file_extension, const char *max_mod_date);
+void create_updated_archive();
+void delete_temp_files();
+void remove_temp_dir();
+char* read_file_extension(int argc, char *argv[]);
+char* read_mod_date_from_file(const char *filename);
+void execute_command(const char *command);
+
 // Функция для создания временной директории
 void create_temp_dir() {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "mkdir temp_dir");
-    if (system(command) != 0) {
-        perror("Error creating temporary directory");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для распаковки архива в временную директорию
 void extract_archive_to_temp_dir() {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "tar -xvf archive.tar.gz -C temp_dir");
-    if (system(command) != 0) {
-        perror("Error extracting archive to temporary directory");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для создания нового архива из временной директории
 void create_updated_archive_from_temp_dir() {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "tar -czvf updated_archive.tar.gz -C temp_dir .");
-    if (system(command) != 0) {
-        perror("Error creating updated archive from temporary directory");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для распаковки архива
 void extract_archive() {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "tar -xvf archive.tar.gz");
-    if (system(command) != 0) {
-        perror("Error extracting archive");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для изменения дат модификации файлов указанного типа в temp_dir
 void change_file_mod_dates_in_temp_dir(const char *file_extension) {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "ls -lt -t temp_dir/*%s | head -n 1 | awk '{print $9}' > max_mod_file.txt", file_extension);
-    if (system(command) != 0) {
-        perror("Error finding file with maximum modification date in temporary directory");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для получения даты модификации файла
 void get_mod_date(const char *file_extension) {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "stat -c %%y $(cat max_mod_file.txt) | awk '{print $1, $2}' > max_mod_date.txt");
-    if (system(command) != 0) {
-        perror("Error getting maximum modification date");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для установки даты модификации для всех файлов указанного типа
 void set_mod_dates(const char *file_extension, const char *max_mod_date) {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "find . -name '*%s' -exec touch -d '%s' {} +", file_extension, max_mod_date);
-    if (system(command) != 0) {
-        perror("Error setting modification date for files");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для создания нового архива с измененными файлами
 void create_updated_archive() {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "tar -czvf updated_archive.tar.gz *");
-    if (system(command) != 0) {
-        perror("Error creating updated archive");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для удаления временных файлов
 void delete_temp_files() {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "rm -f max_mod_file.txt max_mod_date.txt");
-    if (system(command) != 0) {
-        perror("Error deleting temporary files");
-        exit(1);
-    }
+    execute_command(command);
 }
 
 // Функция для удаления временной директории
 void remove_temp_dir() {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "rm -rf temp_dir");
-    if (system(command) != 0) {
-        perror("Error removing temporary directory");
+    execute_command(command);
+}
+
+// Общая функция для выполнения команды
+void execute_command(const char *command) {
+    pid_t pid = fork();
+    if (pid == -1) {
+        perror("Error forking process");
         exit(1);
+    } else if (pid == 0) {
+        // Дочерний процесс
+        execl("/bin/sh", "sh", "-c", command, (char *)NULL);
+        perror("Error executing command");
+        exit(1);
+    } else {
+        // Родительский процесс
+        int status;
+        waitpid(pid, &status, 0);
+        if (WEXITSTATUS(status) != 0) {
+            perror("Error executing command");
+            exit(1);
+        }
     }
 }
 
