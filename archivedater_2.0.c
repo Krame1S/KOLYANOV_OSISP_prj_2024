@@ -8,6 +8,36 @@
 #define MAX_MOD_DATE_SIZE 20
 #define FILE_EXTENSION_SIZE 10
 
+// Функция для создания временной директории
+void create_temp_dir() {
+    char command[COMMAND_SIZE];
+    snprintf(command, sizeof(command), "mkdir temp_dir");
+    if (system(command) != 0) {
+        perror("Error creating temporary directory");
+        exit(1);
+    }
+}
+
+// Функция для распаковки архива в временную директорию
+void extract_archive_to_temp_dir() {
+    char command[COMMAND_SIZE];
+    snprintf(command, sizeof(command), "tar -xvf archive.tar.gz -C temp_dir");
+    if (system(command) != 0) {
+        perror("Error extracting archive to temporary directory");
+        exit(1);
+    }
+}
+
+// Функция для создания нового архива из временной директории
+void create_updated_archive_from_temp_dir() {
+    char command[COMMAND_SIZE];
+    snprintf(command, sizeof(command), "tar -czvf updated_archive.tar.gz -C temp_dir .");
+    if (system(command) != 0) {
+        perror("Error creating updated archive from temporary directory");
+        exit(1);
+    }
+}
+
 // Функция для распаковки архива
 void extract_archive() {
     char command[COMMAND_SIZE];
@@ -18,12 +48,12 @@ void extract_archive() {
     }
 }
 
-// Функция для изменения дат модификации файлов указанного типа
-void change_file_mod_dates(const char *file_extension) {
+// Функция для изменения дат модификации файлов указанного типа в temp_dir
+void change_file_mod_dates_in_temp_dir(const char *file_extension) {
     char command[COMMAND_SIZE];
-    snprintf(command, sizeof(command), "ls -lt -t *%s | head -n 1 | awk '{print $9}' > max_mod_file.txt", file_extension);
+    snprintf(command, sizeof(command), "ls -lt -t temp_dir/*%s | head -n 1 | awk '{print $9}' > max_mod_file.txt", file_extension);
     if (system(command) != 0) {
-        perror("Error finding file with maximum modification date");
+        perror("Error finding file with maximum modification date in temporary directory");
         exit(1);
     }
 }
@@ -58,49 +88,101 @@ void create_updated_archive() {
     }
 }
 
-int main(int argc, char *argv[]) {
+// Функция для удаления временных файлов
+void delete_temp_files() {
+    char command[COMMAND_SIZE];
+    snprintf(command, sizeof(command), "rm -f max_mod_file.txt max_mod_date.txt");
+    if (system(command) != 0) {
+        perror("Error deleting temporary files");
+        exit(1);
+    }
+}
+
+// Функция для удаления временной директории
+void remove_temp_dir() {
+    char command[COMMAND_SIZE];
+    snprintf(command, sizeof(command), "rm -rf temp_dir");
+    if (system(command) != 0) {
+        perror("Error removing temporary directory");
+        exit(1);
+    }
+}
+
+// Функция для чтения расширения файла из аргументов командной строки
+char* read_file_extension(int argc, char *argv[]) {
     if (argc != 2) {
         printf("Usage: %s <file_extension>\n", argv[0]);
-        return 1;
+        exit(1);
     }
-
-    char file_extension[FILE_EXTENSION_SIZE];
+    char *file_extension = malloc(FILE_EXTENSION_SIZE);
+    if (file_extension == NULL) {
+        perror("Error allocating memory for file extension");
+        exit(1);
+    }
     strncpy(file_extension, argv[1], FILE_EXTENSION_SIZE - 1);
     file_extension[FILE_EXTENSION_SIZE - 1] = '\0'; // Ensure null-termination
+    return file_extension;
+}
 
-    // Распаковка архива
-    extract_archive();
+// Функция для чтения даты модификации из файла
+char* read_mod_date_from_file(const char *filename) {
+    FILE *dateFile = fopen(filename, "r");
+    if (dateFile == NULL) {
+        perror("Error opening file");
+        exit(1);
+    }
 
-    // Изменение дат модификации файлов указанного типа
-    change_file_mod_dates(file_extension);
+    char *max_mod_date = malloc(MAX_MOD_DATE_SIZE);
+    if (max_mod_date == NULL) {
+        perror("Error allocating memory for modification date");
+        fclose(dateFile);
+        exit(1);
+    }
+    if (fgets(max_mod_date, MAX_MOD_DATE_SIZE, dateFile) == NULL) {
+        perror("Error reading date from file");
+        fclose(dateFile);
+        free(max_mod_date); // Free allocated memory before exiting
+        exit(1);
+    }
+
+    fclose(dateFile);
+    max_mod_date[strcspn(max_mod_date, "\n")] = '\0'; // Удаление символа новой строки
+    return max_mod_date;
+}
+
+int main(int argc, char *argv[]) {
+    char *file_extension = read_file_extension(argc, argv);
+
+    // Создание временной директории
+    create_temp_dir();
+
+    // Распаковка архива в временную директорию
+    extract_archive_to_temp_dir();
+
+    // Изменение дат модификации файлов указанного типа в temp_dir
+    change_file_mod_dates_in_temp_dir(file_extension);
 
     // Получение даты модификации файла
     get_mod_date(file_extension);
 
     // Получение даты модификации в нужном формате (YYYY-MM-DD HH:MM:SS)
-    FILE *dateFile = fopen("max_mod_date.txt", "r");
-    if (dateFile == NULL) {
-        perror("Error opening max_mod_date.txt");
-        return 1;
-    }
-
-    char max_mod_date[MAX_MOD_DATE_SIZE];
-    if (fgets(max_mod_date, sizeof(max_mod_date), dateFile) == NULL) {
-        perror("Error reading date from max_mod_date.txt");
-        fclose(dateFile);
-        return 1;
-    }
-
-    fclose(dateFile);
-
-    // Удаление символа новой строки из даты
-    max_mod_date[strcspn(max_mod_date, "\n")] = '\0';
+    char *max_mod_date = read_mod_date_from_file("max_mod_date.txt");
 
     // Установка даты модификации для всех файлов указанного типа
     set_mod_dates(file_extension, max_mod_date);
 
-    // Создание нового архива с измененными файлами
-    create_updated_archive();
+    // Создание нового архива с измененными файлами из временной директории
+    create_updated_archive_from_temp_dir();
+
+    // Удаление временных файлов
+    delete_temp_files();
+
+    // Удаление временной директории
+    remove_temp_dir();
+
+    // Освобождение памяти
+    free(file_extension);
+    free(max_mod_date);
 
     return 0;
 }
