@@ -51,6 +51,16 @@ void log_message(const char *level, const char *format, ...) {
     va_end(args);
 }
 
+// Function for reading the file extension from command-line arguments
+char* read_file_extension(int argc, char *argv[]) {
+    if (argc >= 2) {
+        return argv[1];
+    } else {
+        log_message("ERROR", "Usage: program file_extension");
+        exit(1);
+    }
+}
+
 // Function for creating a temporary directory
 void create_temp_dir() {
     char command[COMMAND_SIZE];
@@ -76,23 +86,6 @@ void extract_archive_to_temp_dir(const char *archive_path, const char *archive_t
     log_message("INFO", "Extracted archive to temporary directory");
 }
 
-// Function for creating an updated archive from the temporary directory
-void create_updated_archive_from_temp_dir(const char *archive_path, const char *archive_type) {
-    char command[COMMAND_SIZE];
-    if (strcmp(archive_type, "tar.gz") == 0) {
-        snprintf(command, sizeof(command), "tar -czvf %s -C temp_dir .", archive_path);
-    } else if (strcmp(archive_type, "tar.bz2") == 0) {
-        snprintf(command, sizeof(command), "tar -cjvf %s -C temp_dir .", archive_path);
-    } else if (strcmp(archive_type, "zip") == 0) {
-        snprintf(command, sizeof(command), "cd temp_dir && zip -r -b . %s . && mv %s ..", archive_path, archive_path);
-    } else {
-        log_message("ERROR", "Unsupported archive type: %s", archive_type);
-        exit(1);
-    }
-    execute_command(command);
-    log_message("INFO", "Created updated archive from temporary directory");
-}
-
 // Function for changing file modification dates in the temporary directory
 void change_file_mod_dates_in_temp_dir(const char *file_extension) {
     char command[COMMAND_SIZE];
@@ -109,12 +102,52 @@ void get_mod_date(const char *file_extension) {
     log_message("INFO", "Got modification date of a file");
 }
 
+// Function for reading the modification date from a file
+char* read_mod_date_from_file(const char *filename) {
+    FILE *file = fopen(filename, "r");
+    if (file == NULL) {
+        log_message("ERROR", "Error opening file '%s': %s", filename, strerror(errno));
+        exit(1);
+    }
+
+    char *mod_date = (char *)malloc(MAX_MOD_DATE_SIZE * sizeof(char));
+    if (mod_date == NULL) {
+        log_message("ERROR", "Error allocating memory");
+        exit(1);
+    }
+
+    if (fgets(mod_date, MAX_MOD_DATE_SIZE, file) == NULL) {
+        log_message("ERROR", "Error reading mod date from file '%s'", filename);
+        exit(1);
+    }
+
+    fclose(file);
+    return mod_date;
+}
+
 // Function for setting modification dates for all files of a certain type
 void set_mod_dates(const char *file_extension, const char *max_mod_date) {
     char command[COMMAND_SIZE];
     snprintf(command, sizeof(command), "find temp_dir -name '*%s' -exec touch -d '%s' {} +", file_extension, max_mod_date);
     execute_command(command);
     log_message("INFO", "Set modification dates for all files of a certain type");
+}
+
+// Function for creating an updated archive from the temporary directory
+void create_updated_archive_from_temp_dir(const char *archive_path, const char *archive_type) {
+    char command[COMMAND_SIZE];
+    if (strcmp(archive_type, "tar.gz") == 0) {
+        snprintf(command, sizeof(command), "tar -czvf %s -C temp_dir .", archive_path);
+    } else if (strcmp(archive_type, "tar.bz2") == 0) {
+        snprintf(command, sizeof(command), "tar -cjvf %s -C temp_dir .", archive_path);
+    } else if (strcmp(archive_type, "zip") == 0) {
+        snprintf(command, sizeof(command), "cd temp_dir && zip -r -b . %s . && mv %s ..", archive_path, archive_path);
+    } else {
+        log_message("ERROR", "Unsupported archive type: %s", archive_type);
+        exit(1);
+    }
+    execute_command(command);
+    log_message("INFO", "Created updated archive from temporary directory");
 }
 
 // Function for deleting temporary files
@@ -165,39 +198,6 @@ void execute_command(const char *command) {
             exit(1);
         }
     }
-}
-
-// Function for reading the file extension from command-line arguments
-char* read_file_extension(int argc, char *argv[]) {
-    if (argc >= 2) {
-        return argv[1];
-    } else {
-        log_message("ERROR", "Usage: program file_extension");
-        exit(1);
-    }
-}
-
-// Function for reading the modification date from a file
-char* read_mod_date_from_file(const char *filename) {
-    FILE *file = fopen(filename, "r");
-    if (file == NULL) {
-        log_message("ERROR", "Error opening file '%s': %s", filename, strerror(errno));
-        exit(1);
-    }
-
-    char *mod_date = (char *)malloc(MAX_MOD_DATE_SIZE * sizeof(char));
-    if (mod_date == NULL) {
-        log_message("ERROR", "Error allocating memory");
-        exit(1);
-    }
-
-    if (fgets(mod_date, MAX_MOD_DATE_SIZE, file) == NULL) {
-        log_message("ERROR", "Error reading mod date from file '%s'", filename);
-        exit(1);
-    }
-
-    fclose(file);
-    return mod_date;
 }
 
 int main(int argc, char *argv[]) {
