@@ -251,10 +251,12 @@ void execute_child_process(const char *command) {
     dup2(dev_null, STDERR_FILENO);
     close(dev_null);
 
-    execl("/bin/sh", "sh", "-c", command, (char *)NULL);
-    log_message("ERROR", "Error executing command: %s", command);
-    exit(1);
+    if (execl("/bin/sh", "sh", "-c", command, (char *)NULL) == -1) {
+        log_message("ERROR", "Error executing command: %s", command);
+        exit(1);
+    }
 }
+
 
 // Function to handle the parent process
 void handle_parent_process(pid_t pid) {
