@@ -111,7 +111,8 @@ char* read_file_extension(const char *filename) {
         log_message("ERROR", "No file extension found in '%s'", filename);
         exit(1);
     }
-    return strdup(ext + 1); // Return a copy of the extension
+    char *extension = strdup(ext + 1); // Return a copy of the extension
+    return extension;
 }
 
 // Function for creating a temporary directory
@@ -171,6 +172,7 @@ char* read_mod_date_from_file(const char *filename) {
 
     if (fgets(mod_date, MAX_MOD_DATE_SIZE, file) == NULL) {
         log_message("ERROR", "Error reading mod date from file '%s'", filename);
+        free(mod_date);
         exit(1);
     }
 
