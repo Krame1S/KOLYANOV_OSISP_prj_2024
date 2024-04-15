@@ -48,6 +48,9 @@ int main(int argc, char *argv[]) {
     // Process the archive
     process_archive(argv[2], file_extension);
 
+    // Free memory allocated by strdup
+    free(file_extension);
+
     // Clean up
     clean_up();
 
@@ -55,6 +58,7 @@ int main(int argc, char *argv[]) {
 
     return 0;
 }
+
 
 void open_log_file() {
     log_file = fopen("program.log", "w");
