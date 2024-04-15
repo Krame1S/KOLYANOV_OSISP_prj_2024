@@ -17,22 +17,25 @@
 FILE *log_file;
 
 // Function prototypes
-void create_temp_dir();
+void open_log_file(void);
+void clean_up(void);
+void process_archive(const char *archive_path, const char *file_extension);
+void log_message(const char *level, const char *format, ...);
+char* read_file_extension(const char *filename);
+void create_temp_dir(void);
 void extract_archive_to_temp_dir(const char *archive_path, const char *archive_type);
 void change_file_mod_dates_in_temp_dir(const char *file_extension);
 void get_mod_date(const char *file_extension);
-void set_mod_dates(const char *file_extension, const char *max_mod_date);
-void delete_temp_files();
-void remove_temp_dir();
-char* read_file_extension(const char *filename);
 char* read_mod_date_from_file(const char *filename);
-void execute_command(const char *command);
-pid_t fork_process();
-void open_log_file();
-void clean_up();
-void process_archive(const char *archive_path, const char *file_extension);
+void set_mod_dates(const char *file_extension, const char *max_mod_date);
 void create_updated_archive_from_temp_dir(const char *archive_path, const char *archive_type);
-void log_message(const char *level, const char *format, ...);
+void delete_temp_files(void);
+void remove_temp_dir(void);
+void execute_command(const char *command);
+pid_t fork_process(void);
+void execute_child_process(const char *command);
+void handle_parent_process(pid_t pid);
+
 
 
 int main(int argc, char *argv[]) {
