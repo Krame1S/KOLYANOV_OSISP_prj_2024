@@ -19,16 +19,35 @@ FILE *log_file;
 // Function prototypes
 void create_temp_dir();
 void extract_archive_to_temp_dir(const char *archive_path, const char *archive_type);
-void create_updated_archive_from_temp_dir(const char *archive_path, const char *archive_type);
 void change_file_mod_dates_in_temp_dir(const char *file_extension);
 void get_mod_date(const char *file_extension);
 void set_mod_dates(const char *file_extension, const char *max_mod_date);
 void delete_temp_files();
 void remove_temp_dir();
-char* read_file_extension(int argc, char *argv[]);
+char* read_file_extension(const char *filename);
 char* read_mod_date_from_file(const char *filename);
 void execute_command(const char *command);
 void log_message(const char *level, const char *format, ...);
+
+
+int main(int argc, char *argv[]) {
+    // Initialize log file
+    open_log_file();
+
+    // Read the file extension from the archive file name
+    char *file_extension = read_file_extension(argv[2]);
+
+    // Process the archive
+    process_archive(argv[2], file_extension);
+
+    // Clean up
+    clean_up();
+
+    printf("Your archive has been updated successfully.\n");
+
+    return 0;
+}
+
 
 // Logging function
 void log_message(const char *level, const char *format, ...) {
@@ -51,14 +70,14 @@ void log_message(const char *level, const char *format, ...) {
     va_end(args);
 }
 
-// Function for reading the file extension from command-line arguments
-char* read_file_extension(int argc, char *argv[]) {
-    if (argc >= 2) {
-        return argv[1];
-    } else {
-        log_message("ERROR", "Usage: program file_extension");
+// Function for reading the file extension from the archive file name
+char* read_file_extension(const char *filename) {
+    const char *ext = strrchr(filename, '.');
+    if (!ext) {
+        log_message("ERROR", "No file extension found in '%s'", filename);
         exit(1);
     }
+    return strdup(ext + 1); // Return a copy of the extension
 }
 
 // Function for creating a temporary directory
@@ -198,53 +217,4 @@ void execute_command(const char *command) {
             exit(1);
         }
     }
-}
-
-int main(int argc, char *argv[]) {
-    // Open the log file
-    log_file = fopen("program.log", "w");
-    if (log_file == NULL) {
-        log_message("ERROR", "Error opening log file: %s", strerror(errno));
-        exit(1);
-    }
-
-    // Read the file extension from command-line arguments
-    char *file_extension = read_file_extension(argc, argv);
-
-    // Create a temporary directory
-    create_temp_dir();
-
-    const char *archive_path = argv[2];
-    const char *archive_type = argv[3];
-
-    // Extract the archive to the temporary directory
-    extract_archive_to_temp_dir(archive_path, archive_type);
-
-    // Change file modification dates in the temporary directory
-    change_file_mod_dates_in_temp_dir(file_extension);
-
-    // Get the modification date of the last modified file
-    get_mod_date(file_extension);
-
-    // Read the modification date from the file
-    char *max_mod_date = read_mod_date_from_file("max_mod_date.txt");
-
-    // Set modification dates for all files of a certain type
-    set_mod_dates(file_extension, max_mod_date);
-
-    // Create an updated archive from the temporary directory
-    create_updated_archive_from_temp_dir(archive_path, archive_type);
-
-    // Delete temporary files
-    delete_temp_files();
-
-    // Remove the temporary directory
-    remove_temp_dir();
-
-    // Close the log file
-    fclose(log_file);
-
-    printf("Your archive has been updated successfully.\n");
-
-    return 0;
 }
