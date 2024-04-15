@@ -35,6 +35,7 @@ void execute_command(const char *command);
 pid_t fork_process(void);
 void execute_child_process(const char *command);
 void handle_parent_process(pid_t pid);
+const char* determine_archive_type(const char *file_extension);
 
 
 
@@ -60,6 +61,7 @@ int main(int argc, char *argv[]) {
 }
 
 
+// Function to open the log file for writing
 void open_log_file() {
     log_file = fopen("program.log", "w");
     if (log_file == NULL) {
@@ -68,12 +70,14 @@ void open_log_file() {
     }
 }
 
+// Function to clean up temporary files and directories, and close the log file
 void clean_up() {
     delete_temp_files();
     remove_temp_dir();
     fclose(log_file);
 }
 
+// Function to process an archive file, including creating a temporary directory, extracting the archive, modifying file dates, and creating an updated archive
 void process_archive(const char *archive_path, const char *file_extension) {
     create_temp_dir();
 
@@ -85,6 +89,20 @@ void process_archive(const char *archive_path, const char *file_extension) {
     char *max_mod_date = read_mod_date_from_file("max_mod_date.txt");
     set_mod_dates(file_extension, max_mod_date);
     create_updated_archive_from_temp_dir(archive_path, archive_type);
+}
+
+// Function to determine the type of archive based on its file extension
+const char* determine_archive_type(const char *file_extension) {
+    if (strcmp(file_extension, "tar.gz") == 0) {
+        return "tar.gz";
+    } else if (strcmp(file_extension, "tar.bz2") == 0) {
+        return "tar.bz2";
+    } else if (strcmp(file_extension, "zip") == 0) {
+        return "zip";
+    } else {
+        log_message("ERROR", "Unsupported archive type: %s", file_extension);
+        exit(1);
+    }
 }
 
 // Logging function
