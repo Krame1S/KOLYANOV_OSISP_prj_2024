@@ -141,7 +141,7 @@ void create_updated_archive_from_temp_dir(const char *archive_path, const char *
     } else if (strcmp(archive_type, "tar.bz2") == 0) {
         snprintf(command, sizeof(command), "tar -cjvf %s -C temp_dir .", archive_path);
     } else if (strcmp(archive_type, "zip") == 0) {
-        snprintf(command, sizeof(command), "cd temp_dir && zip -r -b . %s . && mv %s ..", archive_path, archive_path);
+        snprintf(command, sizeof(command), "cd temp_dir && zip -r %s .", archive_path);
     } else {
         log_message("ERROR", "Unsupported archive type: %s", archive_type);
         exit(1);
