@@ -27,6 +27,11 @@ void remove_temp_dir();
 char* read_file_extension(const char *filename);
 char* read_mod_date_from_file(const char *filename);
 void execute_command(const char *command);
+pid_t fork_process();
+void open_log_file();
+void clean_up();
+void process_archive(const char *archive_path, const char *file_extension);
+void create_updated_archive_from_temp_dir(const char *archive_path, const char *archive_type);
 void log_message(const char *level, const char *format, ...);
 
 
@@ -48,6 +53,32 @@ int main(int argc, char *argv[]) {
     return 0;
 }
 
+void open_log_file() {
+    log_file = fopen("program.log", "w");
+    if (log_file == NULL) {
+        log_message("ERROR", "Error opening log file: %s", strerror(errno));
+        exit(1);
+    }
+}
+
+void clean_up() {
+    delete_temp_files();
+    remove_temp_dir();
+    fclose(log_file);
+}
+
+void process_archive(const char *archive_path, const char *file_extension) {
+    create_temp_dir();
+
+    const char *archive_type = determine_archive_type(file_extension);
+
+    extract_archive_to_temp_dir(archive_path, archive_type);
+    change_file_mod_dates_in_temp_dir(file_extension);
+    get_mod_date(file_extension);
+    char *max_mod_date = read_mod_date_from_file("max_mod_date.txt");
+    set_mod_dates(file_extension, max_mod_date);
+    create_updated_archive_from_temp_dir(archive_path, archive_type);
+}
 
 // Logging function
 void log_message(const char *level, const char *format, ...) {
@@ -185,36 +216,53 @@ void remove_temp_dir() {
     log_message("INFO", "Removed temporary directory");
 }
 
-// Function for executing a command
+// Refactored execute_command function
 void execute_command(const char *command) {
+    pid_t pid = fork_process();
+    if (pid == 0) {
+        // Child process
+        execute_child_process(command);
+    } else {
+        // Parent process
+        handle_parent_process(pid);
+    }
+}
+
+// Function to fork the process
+pid_t fork_process() {
     pid_t pid = fork();
     if (pid == -1) {
         log_message("ERROR", "Error forking process");
         exit(1);
-    } else if (pid == 0) {
-        // Child process
-        // Redirect stdout and stderr to /dev/null to suppress output
-        int dev_null = open("/dev/null", O_WRONLY);
-        dup2(dev_null, STDOUT_FILENO);
-        dup2(dev_null, STDERR_FILENO);
-        close(dev_null);
+    }
+    return pid;
+}
 
-        execl("/bin/sh", "sh", "-c", command, (char *)NULL);
-        log_message("ERROR", "Error executing command: %s", command);
-        exit(1);
-    } else {
-        // Parent process
-        int status;
-        waitpid(pid, &status, 0);
-        if (WIFEXITED(status)) {
-            int exit_status = WEXITSTATUS(status);
-            if (exit_status != 0) {
-                log_message("ERROR", "Command '%s' failed with exit status %d", command, exit_status);
-                exit(1);
-            }
-        } else {
-            log_message("ERROR", "Command '%s' did not terminate normally", command);
+// Function to execute the command in the child process
+void execute_child_process(const char *command) {
+    // Redirect stdout and stderr to /dev/null to suppress output
+    int dev_null = open("/dev/null", O_WRONLY);
+    dup2(dev_null, STDOUT_FILENO);
+    dup2(dev_null, STDERR_FILENO);
+    close(dev_null);
+
+    execl("/bin/sh", "sh", "-c", command, (char *)NULL);
+    log_message("ERROR", "Error executing command: %s", command);
+    exit(1);
+}
+
+// Function to handle the parent process
+void handle_parent_process(pid_t pid) {
+    int status;
+    waitpid(pid, &status, 0);
+    if (WIFEXITED(status)) {
+        int exit_status = WEXITSTATUS(status);
+        if (exit_status != 0) {
+            log_message("ERROR", "Command failed with exit status %d", exit_status);
             exit(1);
         }
+    } else {
+        log_message("ERROR", "Command did not terminate normally");
+        exit(1);
     }
 }
