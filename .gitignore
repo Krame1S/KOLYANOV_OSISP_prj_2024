@@ -6,3 +6,6 @@
 *.html
 *.json
 *.docs
+*.o
+*.log
+archivedater
