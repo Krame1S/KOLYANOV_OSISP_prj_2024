@@ -17,43 +17,42 @@
 FILE *log_file;
 
 // Function prototypes
-void open_log_file(void);
-void clean_up(void);
-void process_archive(const char *archive_path, const char *file_extension);
+void process_archive(const char *archive_path, const char *archive_type, const char *file_extension);
+char* read_archive_type(const char *file_path);
 void log_message(const char *level, const char *format, ...);
-char* read_file_extension(const char *filename);
-void create_temp_dir(void);
+char* read_file_extension(int argc, char *argv[]);
+void create_temp_dir();
 void extract_archive_to_temp_dir(const char *archive_path, const char *archive_type);
 void change_file_mod_dates_in_temp_dir(const char *file_extension);
 void get_mod_date(const char *file_extension);
 char* read_mod_date_from_file(const char *filename);
 void set_mod_dates(const char *file_extension, const char *max_mod_date);
 void create_updated_archive_from_temp_dir(const char *archive_path, const char *archive_type);
-void delete_temp_files(void);
-void remove_temp_dir(void);
+void delete_temp_files();
+void remove_temp_dir();
 void execute_command(const char *command);
-pid_t fork_process(void);
-void execute_child_process(const char *command);
-void handle_parent_process(pid_t pid);
-const char* determine_archive_type(const char *file_extension);
+void init_log_file();
 
 
 
 int main(int argc, char *argv[]) {
     // Initialize log file
-    open_log_file();
+    init_log_file();
 
-    // Read the file extension from the archive file name
-    char *file_extension = read_file_extension(argv[2]);
+    // Read the file extension from command-line arguments
+    char *file_extension = read_file_extension(argc, argv);
 
-    // Process the archive
-    process_archive(argv[2], file_extension);
+    // Extract and process the archive
+    const char *archive_path = argv[2];
+    const char *archive_type = read_archive_type(archive_path);
+    process_archive(archive_path, archive_type, file_extension);
 
-    // Free memory allocated by strdup
-    free(file_extension);
+    // Cleanup
+    delete_temp_files();
+    remove_temp_dir();
 
-    // Clean up
-    clean_up();
+    // Close the log file
+    fclose(log_file);
 
     printf("Your archive has been updated successfully.\n");
 
@@ -61,48 +60,15 @@ int main(int argc, char *argv[]) {
 }
 
 
-// Function to open the log file for writing
-void open_log_file() {
-    log_file = fopen("program.log", "w");
-    if (log_file == NULL) {
-        log_message("ERROR", "Error opening log file: %s", strerror(errno));
-        exit(1);
-    }
-}
-
-// Function to clean up temporary files and directories, and close the log file
-void clean_up() {
-    delete_temp_files();
-    remove_temp_dir();
-    fclose(log_file);
-}
-
-// Function to process an archive file, including creating a temporary directory, extracting the archive, modifying file dates, and creating an updated archive
-void process_archive(const char *archive_path, const char *file_extension) {
+// Function for processing the archive
+void process_archive(const char *archive_path, const char *archive_type, const char *file_extension) {
     create_temp_dir();
-
-    const char *archive_type = determine_archive_type(file_extension);
-
     extract_archive_to_temp_dir(archive_path, archive_type);
     change_file_mod_dates_in_temp_dir(file_extension);
     get_mod_date(file_extension);
     char *max_mod_date = read_mod_date_from_file("max_mod_date.txt");
     set_mod_dates(file_extension, max_mod_date);
     create_updated_archive_from_temp_dir(archive_path, archive_type);
-}
-
-// Function to determine the type of archive based on its file extension
-const char* determine_archive_type(const char *file_extension) {
-    if (strcmp(file_extension, "tar.gz") == 0) {
-        return "tar.gz";
-    } else if (strcmp(file_extension, "tar.bz2") == 0) {
-        return "tar.bz2";
-    } else if (strcmp(file_extension, "zip") == 0) {
-        return "zip";
-    } else {
-        log_message("ERROR", "Unsupported archive type: %s", file_extension);
-        exit(1);
-    }
 }
 
 // Logging function
@@ -126,15 +92,30 @@ void log_message(const char *level, const char *format, ...) {
     va_end(args);
 }
 
-// Function for reading the file extension from the archive file name
-char* read_file_extension(const char *filename) {
-    const char *ext = strrchr(filename, '.');
-    if (!ext) {
-        log_message("ERROR", "No file extension found in '%s'", filename);
+// Function for reading the file extension from command-line arguments
+char* read_archive_type(const char *file_path) {
+    // Check for .tar.gz, .tar.bz2, or .zip extensions
+    int path_length = strlen(file_path);
+    if (path_length >= 7 && strcmp(file_path + path_length - 7, ".tar.gz") == 0) {
+        return "tar.gz";
+    } else if (path_length >= 8 && strcmp(file_path + path_length - 8, ".tar.bz2") == 0) {
+        return "tar.bz2";
+    } else if (path_length >= 4 && strcmp(file_path + path_length - 4, ".zip") == 0) {
+        return "zip";
+    } else {
+        log_message("ERROR", "Unsupported archive type or no file extension found in '%s'", file_path);
         exit(1);
     }
-    char *extension = strdup(ext + 1); // Return a copy of the extension
-    return extension;
+}
+
+// Function for reading the file extension from command-line arguments
+char* read_file_extension(int argc, char *argv[]) {
+    if (argc >= 2) {
+        return argv[1];
+    } else {
+        log_message("ERROR", "Usage: program file_extension");
+        exit(1);
+    }
 }
 
 // Function for creating a temporary directory
@@ -194,7 +175,6 @@ char* read_mod_date_from_file(const char *filename) {
 
     if (fgets(mod_date, MAX_MOD_DATE_SIZE, file) == NULL) {
         log_message("ERROR", "Error reading mod date from file '%s'", filename);
-        free(mod_date);
         exit(1);
     }
 
@@ -243,55 +223,46 @@ void remove_temp_dir() {
     log_message("INFO", "Removed temporary directory");
 }
 
-// Refactored execute_command function
+// Function for executing a command
 void execute_command(const char *command) {
-    pid_t pid = fork_process();
-    if (pid == 0) {
-        // Child process
-        execute_child_process(command);
-    } else {
-        // Parent process
-        handle_parent_process(pid);
-    }
-}
-
-// Function to fork the process
-pid_t fork_process() {
+    printf("Executing command: %s\n", command); // Debugging output
     pid_t pid = fork();
     if (pid == -1) {
         log_message("ERROR", "Error forking process");
         exit(1);
-    }
-    return pid;
-}
+    } else if (pid == 0) {
+        // Child process
+        int dev_null = open("/dev/null", O_WRONLY);
+        dup2(dev_null, STDOUT_FILENO);
+        dup2(dev_null, STDERR_FILENO);
+        close(dev_null);
 
-// Function to execute the command in the child process
-void execute_child_process(const char *command) {
-    // Redirect stdout and stderr to /dev/null to suppress output
-    int dev_null = open("/dev/null", O_WRONLY);
-    dup2(dev_null, STDOUT_FILENO);
-    dup2(dev_null, STDERR_FILENO);
-    close(dev_null);
-
-    if (execl("/bin/sh", "sh", "-c", command, (char *)NULL) == -1) {
+        execl("/bin/sh", "sh", "-c", command, (char *)NULL);
         log_message("ERROR", "Error executing command: %s", command);
         exit(1);
+    } else {
+        // Parent process
+        int status;
+        waitpid(pid, &status, 0);
+        if (WIFEXITED(status)) {
+            int exit_status = WEXITSTATUS(status);
+            if (exit_status != 0) {
+                log_message("ERROR", "Command '%s' failed with exit status %d", command, exit_status);
+                exit(1);
+            }
+        } else {
+            log_message("ERROR", "Command '%s' did not terminate normally", command);
+            exit(1);
+        }
     }
 }
 
 
-// Function to handle the parent process
-void handle_parent_process(pid_t pid) {
-    int status;
-    waitpid(pid, &status, 0);
-    if (WIFEXITED(status)) {
-        int exit_status = WEXITSTATUS(status);
-        if (exit_status != 0) {
-            log_message("ERROR", "Command failed with exit status %d", exit_status);
-            exit(1);
-        }
-    } else {
-        log_message("ERROR", "Command did not terminate normally");
+// Function to initialize the log file
+void init_log_file() {
+    log_file = fopen("program.log", "w");
+    if (log_file == NULL) {
+        fprintf(stderr, "Error opening log file: %s\n", strerror(errno));
         exit(1);
     }
 }
