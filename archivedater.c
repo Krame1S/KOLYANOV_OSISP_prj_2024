@@ -7,7 +7,7 @@
 #include <asm-generic/fcntl.h>
 #include <stdarg.h>
 #include <time.h>
-#include <getopt.h>
+#include <signal.h>
 
 // Constants for buffer sizes
 #define COMMAND_SIZE 256
@@ -30,7 +30,6 @@ LogLevel current_log_level = INFO;
 
 typedef enum {
     OPT_VERBOSE,
-    OPT_FILE,
     OPT_UNKNOWN
 } Option;
 
@@ -58,10 +57,20 @@ void execute_command(const char *command);
 void init_log_file();
 void parse_command_line_arguments(int argc, char *argv[]);
 ParsedOption parse_option(const char *arg);
+void register_signal_handlers();
+void signal_handler(int signal);
+void register_cleanup_functions();
+void close_log_file();
 
 int main(int argc, char *argv[]) {
     // Initialize log file
     init_log_file();
+
+    // Register signal handlers
+    register_signal_handlers();
+
+    // Register cleanup functions
+    register_cleanup_functions();
 
         // Parse command-line arguments
     parse_command_line_arguments(argc, argv);
@@ -74,19 +83,38 @@ int main(int argc, char *argv[]) {
     const char *archive_type = read_archive_type(archive_path);
     process_archive(archive_path, archive_type, file_extension);
 
-    // Cleanup
-    delete_temp_files();
-    remove_temp_dir();
-
-    // Close the log file
-    fclose(log_file);
-
-    printf("Your archive has been updated successfully.\n");
+    // log success message
+    log_message(INFO, "Success");
 
     return 0;
 }
 
+// Signal handler function
+void signal_handler(int signal) {
+    log_message(INFO, "Received signal %d, cleaning up and exiting...", signal);
+    exit(0);
+}
 
+// Function to register signal handlers
+void register_signal_handlers() {
+    signal(SIGINT, signal_handler);
+    signal(SIGTERM, signal_handler);
+}
+
+// Function to initialize the log file
+void close_log_file() {
+    if (log_file != NULL) {
+        fclose(log_file);
+        log_file = NULL;
+    }
+}
+
+// Function to register cleanup functions
+void register_cleanup_functions() {
+    atexit(delete_temp_files);
+    atexit(remove_temp_dir);
+    atexit(close_log_file);
+}
 
 // Function for parsing command-line arguments
 ParsedOption parse_option(const char *arg) {
@@ -115,15 +143,11 @@ void parse_command_line_arguments(int argc, char *argv[]) {
             case OPT_UNKNOWN:
                 if(argv[i][0] != '-')
                     break;
-                log_message(ERROR, "Unknown option '%s'", argv[i]);
+                log_message(ERROR, "Invalid option '%s'.\nTry './archivedater -h' for help.", argv[i]);
                 exit(1);
         }
     }
 }
-
-
-
-
 
 // Function for processing the archive
 void process_archive(const char *archive_path, const char *archive_type, const char *file_extension) {
@@ -302,8 +326,6 @@ void remove_temp_dir() {
 
 // Function for executing a command
 void execute_command(const char *command) {
-    //output what command is running
-    //log_message(INFO, "Running command: %s", command);
     pid_t pid = fork();
     if (pid == -1) {
         log_message(ERROR, "Error forking process");
