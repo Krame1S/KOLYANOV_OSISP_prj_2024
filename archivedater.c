@@ -7,6 +7,7 @@
 #include <asm-generic/fcntl.h>
 #include <stdarg.h>
 #include <time.h>
+#include <getopt.h>
 
 // Constants for buffer sizes
 #define COMMAND_SIZE 256
@@ -24,11 +25,19 @@ typedef enum {
     ERROR
 } LogLevel;
 
+// var for current_log_level
+LogLevel current_log_level = INFO;
+
+typedef enum {
+    OPT_VERBOSE,
+    OPT_FILE,
+    OPT_UNKNOWN
+} Option;
+
 typedef struct {
-    int verbose;
-    int logLevel;
-    int quiet;
-} Options;
+    Option option;
+    char *argument;
+} ParsedOption;
 
 
 // Function prototypes
@@ -47,10 +56,15 @@ void delete_temp_files();
 void remove_temp_dir();
 void execute_command(const char *command);
 void init_log_file();
+void parse_command_line_arguments(int argc, char *argv[]);
+ParsedOption parse_option(const char *arg);
 
 int main(int argc, char *argv[]) {
     // Initialize log file
     init_log_file();
+
+        // Parse command-line arguments
+    parse_command_line_arguments(argc, argv);
 
     // Read the file extension from command-line arguments
     char *file_extension = read_file_extension(argc, argv);
@@ -73,6 +87,44 @@ int main(int argc, char *argv[]) {
 }
 
 
+
+// Function for parsing command-line arguments
+ParsedOption parse_option(const char *arg) {
+    ParsedOption result = {OPT_UNKNOWN, NULL};
+
+    if (strcmp(arg, "-v") == 0) {
+        result.option = OPT_VERBOSE;
+    } else {
+        result.option = OPT_UNKNOWN;
+    }
+
+    return result;
+}
+
+// Function for parsing command-line arguments
+void parse_command_line_arguments(int argc, char *argv[]) {
+    for (int i = 1; i < argc; i++) {
+        ParsedOption option = parse_option(argv[i]);
+
+        switch (option.option) {
+            case OPT_VERBOSE:
+                // Enable verbose logging
+                current_log_level = DEBUG;
+                log_message(DEBUG, "Verbose mode enabled");
+                break;
+            case OPT_UNKNOWN:
+                if(argv[i][0] != '-')
+                    break;
+                log_message(ERROR, "Unknown option '%s'", argv[i]);
+                exit(1);
+        }
+    }
+}
+
+
+
+
+
 // Function for processing the archive
 void process_archive(const char *archive_path, const char *archive_type, const char *file_extension) {
     create_temp_dir();
@@ -86,6 +138,9 @@ void process_archive(const char *archive_path, const char *archive_type, const c
 
 // Logging function with timestamps and log levels
 void log_message(LogLevel level, const char *format, ...) {
+    if (level < current_log_level) {
+        return;
+    }
     va_list args;
     va_start(args, format);
 
@@ -247,6 +302,8 @@ void remove_temp_dir() {
 
 // Function for executing a command
 void execute_command(const char *command) {
+    //output what command is running
+    //log_message(INFO, "Running command: %s", command);
     pid_t pid = fork();
     if (pid == -1) {
         log_message(ERROR, "Error forking process");
