@@ -141,10 +141,11 @@ void parse_command_line_arguments(int argc, char *argv[]) {
                 log_message(DEBUG, "Verbose mode enabled");
                 break;
             case OPT_UNKNOWN:
-                if(argv[i][0] != '-')
-                    break;
-                log_message(ERROR, "Invalid option '%s'.\nTry './archivedater -h' for help.", argv[i]);
-                exit(1);
+                if(argv[i][0] == '-') {
+                    log_message(ERROR, "\nInvalid option '%s'.\nTry './archivedater -h' for help.", argv[i]);
+                    exit(1);
+                }
+                break;
         }
     }
 }
@@ -165,8 +166,11 @@ void log_message(LogLevel level, const char *format, ...) {
     if (level < current_log_level) {
         return;
     }
+
     va_list args;
     va_start(args, format);
+    va_list args_copy;
+    va_copy(args_copy, args);
 
     // Get current time
     time_t rawtime;
@@ -186,12 +190,17 @@ void log_message(LogLevel level, const char *format, ...) {
     // Log to file
     if (log_file != NULL) {
         fprintf(log_file, "%s %s: ", timestamp, level == DEBUG ? "DEBUG" : level == INFO ? "INFO" : level == WARN ? "WARN" : "ERROR");
-        vfprintf(log_file, format, args);
+        
+        if (vfprintf(log_file, format, args_copy) < 0) {
+            fprintf(stderr, "Error writing to log file\n");
+        }
         fprintf(log_file, "\n");
     }
 
     va_end(args);
+    va_end(args_copy);
 }
+
 
 // Function for reading the file extension from command-line arguments
 char* read_archive_type(const char *file_path) {
