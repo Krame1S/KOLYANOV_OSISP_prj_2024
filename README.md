@@ -1,4 +1,4 @@
-# Utility Tool for Updating Archives
+# Archivedater
 
 ## Table of Contents
 1. [Introduction](#introduction)
@@ -13,33 +13,31 @@
 8. [License](#license)
 
 ## Introduction
-The Utility Tool for Updating Archives is a powerful command-line tool designed to simplify the process of updating archives. It provides a comprehensive set of features to extract, modify, and re-create archives with updated file modification dates.
+Archivedater is a command-line tool designed to simplify the process of updating file dates in archives. It provides a comprehensive set of features to easily correct the modification dates of the archived files.
 
 ## Features
-- Supports multiple archive types (e.g., ZIP, TAR, etc.)
-- Extracts archives to a temporary directory
-- Changes the modification dates of files within the temporary directory
-- Creates an updated archive from the modified files
+- Supports multiple archive types (e.g., ZIP, TAR.GZ, TAR.BZ2)
 - Provides logging functionality for debugging and troubleshooting
+- Provides several option flags (e.g., --verbose, --outputdir, etc.)
 
 ## Installation
-To install the Utility Tool for Updating Archives, follow these steps:
+To install Archivedater, follow these steps:
 
 1. Clone the repository from GitHub:
    ```
-   git clone https://github.com/your-username/utility-tool.git
+   git clone https://github.com/Krame1S/KOLYANOV_OSISP_prj_2024
    ```
 2. Navigate to the project directory:
    ```
-   cd utility-tool
+   cd KOLYANOV_OSISP_prj_2024
    ```
-3. Compile the source code:
+3. Compile the source code with make:
    ```
-   gcc -o util main.c
+   make all
    ```
 
 ## Usage
-The Utility Tool for Updating Archives can be used from the command line with the following arguments:
+Archivedater can be used from the command line with the following arguments:
 
 ### Command-Line Arguments
 - `working_dir`: The directory where the archive is located and where the updated archive will be created.
