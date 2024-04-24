@@ -1,17 +1,75 @@
-**Курсовое проектирование по ОСиСП
+# Utility Tool for Updating Archives
 
-Выполнение программы начинается с открытия файла файла для записи логгов. Затем программа читает расширение файла из аргументов командной строки, которое будет использоваться для работы с файлами в архиве.
+## Table of Contents
+1. [Introduction](#introduction)
+2. [Features](#features)
+3. [Installation](#installation)
+4. [Usage](#usage)
+    - [Command-Line Arguments](#command-line-arguments)
+    - [Example Usage](#example-usage)
+5. [Logging](#logging)
+6. [Troubleshooting](#troubleshooting)
+7. [Contributing](#contributing)
+8. [License](#license)
 
-Далее осуществляется создание временного каталога с помощью системного вызова mkdir, что позволяет хранить извлеченные файлы из архива. Извлечение архива в созданный временный каталог выполняется с помощью утилит tar или unzip, в зависимости от типа архива.
+## Introduction
+The Utility Tool for Updating Archives is a powerful command-line tool designed to simplify the process of updating archives. It provides a comprehensive set of features to extract, modify, and re-create archives with updated file modification dates.
 
-Далее программа изменяет даты модификации файлов в временном каталоге, чтобы все файлы имели одинаковую дату модификации, равную дате модификации самого последнего измененного файла с указанным расширением. Это достигается с помощью команды find, которая ищет файлы с указанным расширением, и команды touch, которая изменяет дату модификации файлов.
+## Features
+- Supports multiple archive types (e.g., ZIP, TAR, etc.)
+- Extracts archives to a temporary directory
+- Changes the modification dates of files within the temporary directory
+- Creates an updated archive from the modified files
+- Provides logging functionality for debugging and troubleshooting
 
-Получение даты модификации последнего измененного файла с указанным расширением осуществляется с помощью команды stat, которая выводит информацию о файле, включая дату модификации. Эта информация записывается в файл с помощью команды awk, которая обрабатывает вывод команды stat.
+## Installation
+To install the Utility Tool for Updating Archives, follow these steps:
 
-Установка даты модификации для всех файлов с указанным расширением в временном каталоге также выполняется с помощью команды touch, но в этот раз с использованием даты модификации, полученной из файла.
+1. Clone the repository from GitHub:
+   ```
+   git clone https://github.com/your-username/utility-tool.git
+   ```
+2. Navigate to the project directory:
+   ```
+   cd utility-tool
+   ```
+3. Compile the source code:
+   ```
+   gcc -o util main.c
+   ```
 
-Создание обновленного архива из временного каталога осуществляется с помощью команд tar или zip, в зависимости от типа архива. Это позволяет сохранить измененные файлы в новом архиве с тем же именем и расширением, что и исходный архив.
+## Usage
+The Utility Tool for Updating Archives can be used from the command line with the following arguments:
 
-После завершения всех операций программа удаляет временные файлы и временный каталог, используя команды rm и rmdir. Затем программа закрывает файл журнала и выводит сообщение о успешном обновлении архива.
+### Command-Line Arguments
+- `working_dir`: The directory where the archive is located and where the updated archive will be created.
+- `file_extension`: (Optional) The file extension of the files to be updated within the archive. If not provided, the tool will process all files in the archive.
 
-Все действия, включая чтение аргументов командной строки, создание временных файлов и каталогов, изменение дат модификации файлов и удаление временных файлов и каталогов, логируются в файл журнала и на консоль.
+### Example Usage
+To update an archive with the default file extension:
+```
+./util /path/to/archive.zip
+```
+
+To update an archive with a specific file extension:
+```
+./util /path/to/archive.tar.gz .cpp
+```
+
+## Logging
+The Utility Tool for Updating Archives provides logging functionality to help with debugging and troubleshooting. The log file is created in the same directory as the tool and is named `util.log`. You can adjust the log level by modifying the `current_log_level` variable in the source code.
+
+## Troubleshooting
+If you encounter any issues while using the Utility Tool for Updating Archives, please check the log file for more information. If the issue persists, feel free to open an issue on the project's GitHub repository.
+
+## Contributing
+Contributions to the Utility Tool for Updating Archives are welcome! If you would like to contribute, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch for your feature or bug fix.
+3. Make your changes and commit them.
+4. Push your changes to your forked repository.
+5. Create a pull request to the main repository.
+
+## License
+The Utility Tool for Updating Archives is licensed under the [MIT License](LICENSE). 
