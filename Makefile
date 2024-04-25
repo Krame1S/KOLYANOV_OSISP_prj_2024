@@ -1,5 +1,4 @@
 CC=gcc
-CFLAGS = -std=c11 -pedantic -Wall -Wextra -Werror
 CFILES=archivedater.c
 OBJECTS=archivedater.o
 
