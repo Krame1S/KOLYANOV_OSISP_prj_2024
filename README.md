@@ -53,7 +53,7 @@ Archivedater can be used from the command line with the following arguments:
     - Long Form: `--quiet`
   
 - **Filetype Option**
-    - Short Form:f`
+    - Short Form: `-f`
     - Long Form: `--filetype`
   
 - **Loglevel Option**
@@ -72,30 +72,20 @@ Archivedater can be used from the command line with the following arguments:
     - Long Form: `--version`
 
 ### Example Usage
-To update an archive with the default file extension:
+To update all file modification dates within archive:
 ```
-./util /path/to/archive.zip
-```
-
-To update an archive with a specific file extension:
-```
-./util /path/to/archive.tar.gz .cpp
+archivedater /path/to/archive.zip
 ```
 
-## Logging
-The Utility Tool for Updating Archives provides logging functionality to help with debugging and troubleshooting. The log file is created in the same directory as the tool and is named `util.log`. You can adjust the log level by modifying the `current_log_level` variable in the source code.
+To update the modification dates of files of the .cpp type within archive, outputing updated archive in output/dir/:
+```
+archivedater /path/to/archive.tar.gz .cpp -o output/dir/
+```
+
+To show help message:
+```
+archivedater --help
+```
 
 ## Troubleshooting
 If you encounter any issues while using the Utility Tool for Updating Archives, please check the log file for more information. If the issue persists, feel free to open an issue on the project's GitHub repository.
-
-## Contributing
-Contributions to the Utility Tool for Updating Archives are welcome! If you would like to contribute, please follow these steps:
-
-1. Fork the repository.
-2. Create a new branch for your feature or bug fix.
-3. Make your changes and commit them.
-4. Push your changes to your forked repository.
-5. Create a pull request to the main repository.
-
-## License
-The Utility Tool for Updating Archives is licensed under the [MIT License](LICENSE). 
