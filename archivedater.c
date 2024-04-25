@@ -97,9 +97,12 @@ int main(int argc, char *argv[]) {
     const char *archive_type = read_archive_type(archive_path);
     process_archive(archive_path, archive_type, file_extension, working_dir);
 
-    printf("The archive has been updated successfully.\n");
-
     return 0;
+}
+
+//Function to print "successful" message
+void execution_successful_message() {
+    printf("The archive has been updated successfully.\n");
 }
 
 // Function for extracting the file name from a path
@@ -134,6 +137,7 @@ void close_log_file() {
 
 // Function to register cleanup functions
 void register_cleanup_functions() {
+    atexit(execution_successful_message);
     atexit(delete_temp_files);
     atexit(remove_temp_dir);
     atexit(close_log_file);
