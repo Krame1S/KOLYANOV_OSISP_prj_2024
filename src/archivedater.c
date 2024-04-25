@@ -7,7 +7,7 @@
 #include "utils.h"
 
 int main(int argc, char *argv[]) {
-    char *working_dir = NULL;
+    char* working_dir = argv[1];
     char *file_extension = "*";
 
     initialize_program();
