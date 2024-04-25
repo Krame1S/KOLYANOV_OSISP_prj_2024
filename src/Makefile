@@ -1,6 +1,6 @@
 CC=gcc
-CFILES=archivedater.c
-OBJECTS=archivedater.o
+CFILES=archivedater.c archive_processing.c utils.c logging.c options.c 
+OBJECTS=archivedater.o archive_processing.o utils.o logging.o options.o
 
 BINARY=archivedater
 
