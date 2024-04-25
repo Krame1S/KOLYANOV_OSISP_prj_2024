@@ -10,12 +10,13 @@
 extern int temp_dir_created;
 extern int temp_files_created;
 
-void execution_successful_message();
+void initialize_program();
+void handle_missing_archive_path(int argc, char *argv[], char *working_dir);
 char *extract_file_name(char *path, bool* flag);
 void signal_handler(int signal);
 void register_signal_handlers();
 void register_cleanup_functions();
 void execute_command(const char *command);
-void execution_failed_message();
+void register_cleanup_functions();
 
 #endif

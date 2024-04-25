@@ -13,13 +13,29 @@
 int temp_dir_created = 0;
 int temp_files_created = 0;
 
-//Function to print "successful" message
-void execution_successful_message() {
-    printf("The archive has been updated successfully.\n");
+void exit_message() {
+    if(exit_status == 0)
+        printf("The archive has been updated successfully.\n");
+    else
+        printf("The archive has not been updated.\n");
 }
 
-void execution_failed_message() {
-    printf("The archive has not been updated.\n");
+// Function to initialize the program
+void initialize_program() {
+    init_log_file();
+    log_message(INFO, "Program started");
+    register_signal_handlers();
+    register_cleanup_functions();
+}
+
+// Function for handling missing archive path
+void handle_missing_archive_path(int argc, char *argv[], char *working_dir) {
+    if (argc < 2) {
+        fprintf(stderr, "Error: No archive path provided.\n");
+        fprintf(stderr, "Usage: %s [archive_path] [options]\n", argv[0]);
+        exit_status = 1;
+        exit(1);
+    }
 }
 
 // Function for extracting the file name from a path
@@ -43,6 +59,14 @@ void signal_handler(int signal) {
 void register_signal_handlers() {
     signal(SIGINT, signal_handler);
     signal(SIGTERM, signal_handler);
+}
+
+// Function to register cleanup functions
+void register_cleanup_functions() {
+    atexit(exit_message);
+    atexit(delete_temp_files);
+    atexit(remove_temp_dir);
+    atexit(close_log_file);
 }
 
 // Function for executing a command
