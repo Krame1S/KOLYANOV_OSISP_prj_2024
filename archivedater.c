@@ -4,7 +4,7 @@
 #include <errno.h>
 #include <unistd.h>
 #include <sys/wait.h>
-#include <asm-generic/fcntl.h>
+#include <fcntl.h>
 #include <stdarg.h>
 #include <time.h>
 #include <signal.h>
