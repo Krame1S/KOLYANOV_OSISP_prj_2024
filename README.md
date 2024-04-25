@@ -26,7 +26,7 @@ To install Archivedater, follow these steps:
    ```
 2. Navigate to the project directory:
    ```
-   cd KOLYANOV_OSISP_prj_2024
+   cd KOLYANOV_OSISP_prj_2024/src
    ```
 3. Compile the source code with make:
    ```
