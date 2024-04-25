@@ -13,6 +13,7 @@
 #define COMMAND_SIZE 256
 #define MAX_MOD_DATE_SIZE 20
 #define FILE_EXTENSION_SIZE 10
+#define TIME_STAMP_SIZE 80
 
 // Global variable for the log file
 FILE *log_file;
@@ -302,7 +303,7 @@ void log_message(LogLevel level, const char *format, ...) {
     // Get current time
     time_t rawtime;
     struct tm *timeinfo;
-    char timestamp[80];
+    char timestamp[TIME_STAMP_SIZE];
 
     time(&rawtime);
     timeinfo = localtime(&rawtime);
@@ -331,7 +332,6 @@ void log_message(LogLevel level, const char *format, ...) {
 
 // Function for reading the file extension from command-line arguments
 char* read_archive_type(const char *archive_path) {
-    // Check for .tar.gz, .tar.bz2, or .zip extensions
     int path_length = strlen(archive_path);
     if (path_length >= 7 && strcmp(archive_path + path_length - 7, ".tar.gz") == 0) {
         return "tar.gz";
