@@ -7,10 +7,7 @@
 4. [Usage](#usage)
     - [Command-Line Arguments](#command-line-arguments)
     - [Example Usage](#example-usage)
-5. [Logging](#logging)
-6. [Troubleshooting](#troubleshooting)
-7. [Contributing](#contributing)
-8. [License](#license)
+5. [Troubleshooting](#troubleshooting)
 
 ## Introduction
 Archivedater is a command-line tool designed to simplify the process of updating file dates in archives. It provides a comprehensive set of features to easily correct the modification dates of the archived files.
