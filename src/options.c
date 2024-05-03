@@ -148,5 +148,5 @@ void print_help_message() {
     printf("    1 An error occurred.\n");
     printf("\n");
     printf("SEE ALSO\n");
-    printf("    https://github.com/Krame1S/KOLYANOV_OSISP_prj_2024/blob/master/README.md\n");
+    printf("    https://github.com/Krame1S/KOLYANOV_OSISP_prj_2024/blob/master/README.md#usage \n");
 }

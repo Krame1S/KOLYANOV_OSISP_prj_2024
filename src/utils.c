@@ -33,7 +33,8 @@ void handle_missing_archive_path(int argc, char *argv[], char *working_dir) {
     if (argc < 2) {
         fprintf(stderr, "Error: No archive path provided.\n");
         fprintf(stderr, "Usage: %s [archive_path] [options]\n", argv[0]);
-        exit_status = 1;
+        fprintf(stderr, "Try -h or --help for help.\n");
+        exit_status = 2;
         exit(1);
     }
 }
