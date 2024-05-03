@@ -70,10 +70,12 @@ void parse_command_line_arguments(int argc, char *argv[], char **working_dir, ch
                 break;
             case OPT_HELP:
                 print_help_message();
+                exit_status = 2;
                 exit(0);
                 break;
             case OPT_VERSION:
                 printf("archivedater version 1.0\n");
+                exit_status = 2;
                 exit(0);
                 break;
             case OPT_UNKNOWN:

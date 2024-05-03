@@ -16,7 +16,7 @@ int temp_files_created = 0;
 void exit_message() {
     if(exit_status == 0)
         printf("The archive has been updated successfully.\n");
-    else
+    else if(exit_status == 1)
         printf("The archive has not been updated.\n");
 }
 
