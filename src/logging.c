@@ -57,7 +57,6 @@ void init_log_file() {
     log_file = fopen("program.log", "a");
     if (log_file == NULL) {
         fprintf(stderr, "Error opening log file: %s\n", strerror(errno));
-        exit_status = 1;
         exit(1);
     }
 }

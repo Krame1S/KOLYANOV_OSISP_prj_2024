@@ -13,13 +13,6 @@
 int temp_dir_created = 0;
 int temp_files_created = 0;
 
-void exit_message() {
-    if(exit_status == 0)
-        printf("The archive has been updated successfully.\n");
-    else if(exit_status == 1)
-        printf("The archive has not been updated.\n");
-}
-
 // Function to initialize the program
 void initialize_program() {
     init_log_file();
@@ -34,7 +27,6 @@ void handle_missing_archive_path(int argc, char *argv[], char *working_dir) {
         fprintf(stderr, "Error: No archive path provided.\n");
         fprintf(stderr, "Usage: %s [archive_path] [options]\n", argv[0]);
         fprintf(stderr, "Try -h or --help for help.\n");
-        exit_status = 2;
         exit(1);
     }
 }
@@ -53,7 +45,7 @@ char *extract_file_name(char *path, bool* flag) {
 // Signal handler function
 void signal_handler(int signal) {
     log_message(INFO, "Received signal %d, cleaning up and exiting...", signal);
-    exit(exit_status);
+    exit(0);
 }
 
 // Function to register signal handlers
@@ -64,7 +56,6 @@ void register_signal_handlers() {
 
 // Function to register cleanup functions
 void register_cleanup_functions() {
-    atexit(exit_message);
     atexit(delete_temp_files);
     atexit(remove_temp_dir);
     atexit(close_log_file);
@@ -75,7 +66,6 @@ void execute_command(const char *command) {
     pid_t pid = fork();
     if (pid == -1) {
         log_message(ERROR, "Error forking process");
-        exit_status = 1;
         exit(1);
     } else if (pid == 0) {
         // Child process
@@ -87,7 +77,6 @@ void execute_command(const char *command) {
 
         execl("/bin/sh", "sh", "-c", command, (char *)NULL);
         log_message(ERROR, "Error executing command: %s", command);
-        exit_status = 1;
         exit(1);
     } else {
         // Parent process
@@ -97,12 +86,10 @@ void execute_command(const char *command) {
             int exit_status = WEXITSTATUS(status);
             if (exit_status != 0) {
                 log_message(ERROR, "Command '%s' failed with exit status %d", command, exit_status);
-                exit_status = 1;
                 exit(1);
             }
         } else {
             log_message(ERROR, "Command '%s' did not terminate normally", command);
-            exit_status = 1;
             exit(1);
         }
     }

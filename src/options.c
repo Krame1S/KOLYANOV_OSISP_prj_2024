@@ -47,7 +47,6 @@ void parse_command_line_arguments(int argc, char *argv[], char **working_dir, ch
                     }
                 } else {
                     log_message(ERROR, "Missing argument for -l");
-                    exit_status = 1;
                     exit(1);
                 }
                 break;
@@ -56,7 +55,6 @@ void parse_command_line_arguments(int argc, char *argv[], char **working_dir, ch
                     i++;
                     if (chdir(argv[i]) != 0) {
                         perror("chdir() to specified output directory failed");
-                        exit_status = 1;
                         exit(1);
                     }
                     *working_dir = argv[i];
@@ -64,24 +62,20 @@ void parse_command_line_arguments(int argc, char *argv[], char **working_dir, ch
                     log_message(WARN, "The updated archive will be created in the specified output directory");
                 } else {
                     log_message(ERROR, "Missing argument for -o");
-                    exit_status = 1;
                     exit(1);
                 }
                 break;
             case OPT_HELP:
                 print_help_message();
-                exit_status = 2;
                 exit(0);
                 break;
             case OPT_VERSION:
                 printf("archivedater version 1.0\n");
-                exit_status = 2;
                 exit(0);
                 break;
             case OPT_UNKNOWN:
                 if(argv[i][0] == '-') {
                     log_message(ERROR, "\nInvalid option '%s'.\nTry './archivedater -h' for help.", argv[i]);
-                    exit_status = 1;
                     exit(1);
                 }
                 break;

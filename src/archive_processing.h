@@ -1,8 +1,6 @@
 #ifndef ARCHIVE_PROCESSING_H
 #define ARCHIVE_PROCESSING_H
 
-extern int exit_status;
-
 void process_archive(char *archive_path, const char *archive_type, const char *file_extension, char *working_dir);
 char* read_archive_type(const char *archive_path);
 void create_temp_dir();

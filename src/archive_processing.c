@@ -9,9 +9,6 @@
 #include "logging.h"
 #include "utils.h"
 
-//global var for tracking exit status
-int exit_status = 0;
-
 // Function for processing the archive
 void process_archive(char *archive_path, const char *archive_type, const char *file_extension, char *working_dir) {
     create_temp_dir();
@@ -34,7 +31,6 @@ char* read_archive_type(const char *archive_path) {
         return "zip";
     } else {
         log_message(ERROR, "Unsupported archive type or archive path '%s'", archive_path);
-        exit_status = 1;
         exit(1);
     }
 }
@@ -59,7 +55,6 @@ void extract_archive_to_temp_dir(char *archive_path, const char *archive_type) {
         snprintf(command, sizeof(command), "unzip %s -d temp_dir", archive_path);
     } else {
         log_message(ERROR, "Unsupported archive type: %s", archive_type);
-        exit_status = 1;
         exit(1);
     }
     execute_command(command);
@@ -89,20 +84,17 @@ char* read_mod_date_from_file(const char *filename) {
     FILE *file = fopen(filename, "r");
     if (file == NULL) {
         log_message(ERROR, "Error opening file '%s': %s", filename, strerror(errno));
-        exit_status = 1;
         exit(1);
     }
 
     char *mod_date = (char *)malloc(MAX_MOD_DATE_SIZE * sizeof(char));
     if (mod_date == NULL) {
         log_message(ERROR, "Error allocating memory");
-        exit_status = 1;
         exit(1);
     }
 
     if (fgets(mod_date, MAX_MOD_DATE_SIZE, file) == NULL) {
         log_message(ERROR, "Error reading mod date from file '%s'", filename);
-        exit_status = 1;
         exit(1);
     }
 
@@ -138,7 +130,6 @@ void create_updated_archive_from_temp_dir(char *archive_path, const char *archiv
         snprintf(command, sizeof(command), "cd temp_dir && zip -r %s%s .", archive_path, filename);
     } else {
         log_message(ERROR, "Unsupported archive type: %s", archive_type);
-        exit_status = 1;
         exit(1);
     }
     execute_command(command);
